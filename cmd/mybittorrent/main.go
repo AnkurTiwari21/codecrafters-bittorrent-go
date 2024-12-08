@@ -146,7 +146,7 @@ func main() {
 			return
 		}
 		fmt.Println("Tracker URL: ",FileData.Announce)
-		fmt.Println("Length: ",FileData.Info.Length)
+		// fmt.Println("Length: ",FileData.Info.Length)
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
