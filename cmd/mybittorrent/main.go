@@ -145,8 +145,7 @@ func main() {
 			fmt.Errorf("error is ", err)
 			return
 		}
-		fmt.Print("Tracker URL: " + FileData.Announce)
-		fmt.Print("Length: " + string(FileData.Info.Length))
+		fmt.Print("Tracker URL: " + FileData.Announce + " " + "Length: " + strconv.Itoa(int(FileData.Info.Length)))
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
