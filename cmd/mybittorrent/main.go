@@ -44,7 +44,7 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 	} else if bencodedString[0] == 'l' {
 		//it is a list
 		list := []interface{}{}
-		fmt.Print("hi")
+		// fmt.Print("hi")
 		for i := 1; i < len(bencodedString); i++ {
 			if bencodedString[i] == 'i' {
 				numStr := ""
@@ -58,8 +58,8 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 					return "", fmt.Errorf("error in conversion..")
 				}
 				list = append(list, num)
-				fmt.Print("appending")
-				fmt.Print(num)
+				// fmt.Print("appending")
+				// fmt.Print(num)
 			}else if(unicode.IsDigit(rune(bencodedString[i]))){
 				str := ""
 				lenStr := ""
@@ -76,6 +76,10 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 					str += string(bencodedString[i])
 					i++;
 				}
+				list = append(list, str)
+				// fmt.Print("appending")
+				// fmt.Print(str)
+				i--;
 			}
 		}
 		return list, nil
