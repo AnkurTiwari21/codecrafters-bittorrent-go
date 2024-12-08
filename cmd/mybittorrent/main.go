@@ -70,8 +70,6 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 		var key string
 		var value interface{}
 		for *pointer < len(bencodedString) {
-			// fmt.Print("pointer is ",*pointer)
-			// fmt.Print("len is ",len(bencodedString))
 			result, err := decodeBencode(bencodedString, pointer)
 			if err != nil {
 				return "", fmt.Errorf("error in decoding string | err", err)
