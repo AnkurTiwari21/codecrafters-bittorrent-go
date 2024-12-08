@@ -33,7 +33,7 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 			return "", err
 		}
 
-		return bencodedString[firstColonIndex+1 : firstColonIndex+1+length]+"\n", nil
+		return bencodedString[firstColonIndex+1 : firstColonIndex+1+length], nil
 	} else if bencodedString[1]-'0' >= 0 && bencodedString[1]-'0' <= 9 {
 		//decode this integer
 		//i<inteeger>e
