@@ -152,9 +152,10 @@ func main() {
 		bencodedInfo += "d"
 		lengthStr := strconv.Itoa(int(FileData.Info.Length))
 		bencodedInfo += "i" + lengthStr + "e"
+		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
 		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
 		bencodedInfo += "i" + piecesLengthStr + "e"
-		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
+		
 		piecesStr := fmt.Sprintf("%x", FileData.Info.Pieces)
 		bencodedInfo += strconv.Itoa(len(piecesStr)) + ":" + piecesStr
 		bencodedInfo += "e"
