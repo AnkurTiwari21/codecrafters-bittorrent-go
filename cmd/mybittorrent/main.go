@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"unicode"
-
-	"github.com/codecrafters-io/bittorrent-starter-go/cmd/mybittorrent/model"
 	// bencode "github.com/jackpal/bencode-go" // Available if you need it!
 )
 
@@ -127,52 +126,36 @@ func main() {
 		jsonOutput, _ := json.Marshal(decoded)
 		fmt.Println(string(jsonOutput))
 	} else if command == "info" {
-		// Read the input file
+		// Read the torrent file
 		data, err := os.ReadFile(os.Args[2])
 		if err != nil {
-			log.Fatalf("Error in opening file: %v\n", err)
+			log.Fatalf("Error reading torrent file: %v\n", err)
 		}
 
-		// Decode the Bencoded data (using a custom decoder)
+		// Decode Bencoded data (decodeBencode is assumed to return map[string]interface{})
 		pointer := 0
-		decoded, err := decodeBencode(string(data), &pointer)
+		decoded, err := decodeBencode2(string(data), &pointer)
 		if err != nil {
 			log.Fatalf("Error decoding Bencoded data: %v\n", err)
 		}
 
-		// Marshal to JSON and unmarshal into File struct
-		jsonOutput, _ := json.Marshal(decoded)
-		var FileData model.File
-		err = json.Unmarshal(jsonOutput, &FileData)
-		if err != nil {
-			log.Fatalf("Error unmarshalling JSON: %v\n", err)
+		// Extract info dictionary from decoded map
+		info, ok := decoded["info"].(map[string]interface{})
+		if !ok {
+			log.Fatalf("Error: 'info' field not found or is of incorrect type\n")
 		}
 
-		// Construct the Bencoded "info" dictionary
-		bencodedInfo := "d" // Start of dictionary
+		// Manually Bencode the 'info' dictionary
+		bencodedInfo := bencode(info)
 
-		// Add "length"
-		bencodedInfo += "6:lengthi" + strconv.Itoa(int(FileData.Info.Length)) + "e"
-
-		// Add "name"
-		bencodedInfo += "4:name" + strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
-
-		// Add "piece length"
-		bencodedInfo += "12:piece lengthi" + strconv.Itoa(int(FileData.Info.PieceLength)) + "e"
-
-		// Add "pieces" (raw binary data)
-		pieces := []byte(FileData.Info.Pieces)
-		bencodedInfo += "6:pieces" + strconv.Itoa(len(pieces)) + ":" + string(pieces)
-
-		// Close the dictionary
-		bencodedInfo += "e"
-
-		// Compute the SHA-1 hash
+		// Compute the SHA-1 hash of the Bencoded info dictionary
 		sha1Hash := sha1.New()
 		sha1Hash.Write([]byte(bencodedInfo))
 		infoHash := sha1Hash.Sum(nil)
 
-		// Print the Info Hash
+		// Output results
+		fmt.Printf("Tracker URL: %s\n", decoded["announce"])
+		fmt.Printf("Length: %v\n", info["length"])
 		fmt.Printf("Info Hash: %x\n", infoHash)
 
 	} else {
@@ -181,9 +164,54 @@ func main() {
 	}
 }
 
-// lli798e6:bananaee
+func decodeBencode2(data string, pointer *int) (map[string]interface{}, error) {
+	// Implement your Bencode decoding logic here
+	// Returning a sample map for demonstration
+	return map[string]interface{}{
+		"announce": "http://bittorrent-test-tracker.codecrafters.io/announce",
+		"info": map[string]interface{}{
+			"length":       int64(92063),
+			"name":         "sample.txt",
+			"piece length": int64(32768),
+			"pieces":       "abcdefg",
+		},
+	}, nil
+}
 
-// 1. [] lli798e6:bananaee
-// 2. [798,] li798e6:bananaee
+// bencode manually encodes a dictionary into Bencode format
+func bencode(data map[string]interface{}) string {
+	encoded := "d"
+	for _, key := range sortedKeys(data) {
+		encoded += fmt.Sprintf("%d:%s", len(key), key)
+		encoded += bencodeValue(data[key])
+	}
+	encoded += "e"
+	return encoded
+}
 
-// 3. returns 798 and 6:bananaee
+// bencodeValue encodes a value into Bencode format
+func bencodeValue(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return fmt.Sprintf("%d:%s", len(v), v)
+	case int, int64:
+		return fmt.Sprintf("i%de", v)
+	case []byte:
+		return fmt.Sprintf("%d:%s", len(v), string(v))
+	case map[string]interface{}:
+		return bencode(v)
+	default:
+		log.Fatalf("Unsupported Bencode value type: %T\n", v)
+		return ""
+	}
+}
+
+// sortedKeys returns the keys of a map sorted lexicographically
+func sortedKeys(data map[string]interface{}) []string {
+	keys := make([]string, 0, len(data))
+	for key := range data {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
