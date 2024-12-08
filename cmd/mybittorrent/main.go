@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"unicode"
@@ -126,48 +127,54 @@ func main() {
 		jsonOutput, _ := json.Marshal(decoded)
 		fmt.Println(string(jsonOutput))
 	} else if command == "info" {
-		//read the file assigned in command line
+		// Read the input file
 		data, err := os.ReadFile(os.Args[2])
 		if err != nil {
-			fmt.Println("error in opening file | err", err)
-			return
+			log.Fatalf("Error in opening file: %v\n", err)
 		}
+
+		// Decode the Bencoded data (using a custom decoder)
 		pointer := 0
 		decoded, err := decodeBencode(string(data), &pointer)
 		if err != nil {
-			fmt.Println(err)
-			return
+			log.Fatalf("Error decoding Bencoded data: %v\n", err)
 		}
 
+		// Marshal to JSON and unmarshal into File struct
 		jsonOutput, _ := json.Marshal(decoded)
-		// fmt.Print(string(jsonOutput))
 		var FileData model.File
 		err = json.Unmarshal(jsonOutput, &FileData)
 		if err != nil {
-			fmt.Errorf("error is ", err)
-			return
+			log.Fatalf("Error unmarshalling JSON: %v\n", err)
 		}
-		//extract data of info section
-		bencodedInfo := ""
-		bencodedInfo += "4:infod"
-		lengthStr := strconv.Itoa(int(FileData.Info.Length))
-		bencodedInfo += "6:length" + "i" + lengthStr + "e"
-		bencodedInfo += "4:name" + strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
-		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
-		bencodedInfo += "12:piece length" + "i" + piecesLengthStr + "e"
 
+		// Construct the Bencoded "info" dictionary
+		bencodedInfo := "d" // Start of dictionary
+
+		// Add "length"
+		bencodedInfo += "6:lengthi" + strconv.Itoa(int(FileData.Info.Length)) + "e"
+
+		// Add "name"
+		bencodedInfo += "4:name" + strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
+
+		// Add "piece length"
+		bencodedInfo += "12:piece lengthi" + strconv.Itoa(int(FileData.Info.PieceLength)) + "e"
+
+		// Add "pieces" (raw binary data)
 		pieces := []byte(FileData.Info.Pieces)
 		bencodedInfo += "6:pieces" + strconv.Itoa(len(pieces)) + ":" + string(pieces)
+
+		// Close the dictionary
 		bencodedInfo += "e"
 
-		//make a sha1 hash
-		sha1 := sha1.New()
-		sha1.Write([]byte(bencodedInfo))
-		var encrypted = sha1.Sum(nil)
-		var encryptedString = fmt.Sprintf("%x", encrypted)
-		// fmt.Println(encryptedString)
-		fmt.Printf("Hash Info: %v", encryptedString)
-		// fmt.Print(bencodedInfo)
+		// Compute the SHA-1 hash
+		sha1Hash := sha1.New()
+		sha1Hash.Write([]byte(bencodedInfo))
+		infoHash := sha1Hash.Sum(nil)
+
+		// Print the Info Hash
+		fmt.Printf("Info Hash: %x\n", infoHash)
+
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
