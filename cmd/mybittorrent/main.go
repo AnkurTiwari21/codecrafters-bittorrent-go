@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"unicode"
+
+	"github.com/codecrafters-io/bittorrent-starter-go/cmd/mybittorrent/model"
 	// bencode "github.com/jackpal/bencode-go" // Available if you need it!
 )
 
@@ -122,6 +124,29 @@ func main() {
 
 		jsonOutput, _ := json.Marshal(decoded)
 		fmt.Println(string(jsonOutput))
+	} else if command == "info" {
+		//read the file assigned in command line
+		data, err := os.ReadFile(os.Args[2])
+		if err != nil {
+			fmt.Println("error in opening file | err", err)
+			return
+		}
+		pointer := 0
+		decoded, err := decodeBencode(string(data), &pointer)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		jsonOutput, _ := json.Marshal(decoded)
+		var FileData model.File
+		err = json.Unmarshal(jsonOutput, &FileData)
+		if err != nil {
+			fmt.Errorf("error is ", err)
+			return
+		}
+		fmt.Println("Tracker URL: ",FileData.Announce)
+		fmt.Println("Length: ",FileData.Info.Length)
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
