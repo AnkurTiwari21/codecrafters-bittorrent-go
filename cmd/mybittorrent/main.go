@@ -140,33 +140,33 @@ func main() {
 		}
 
 		jsonOutput, _ := json.Marshal(decoded)
+		// fmt.Print(string(jsonOutput))
 		var FileData model.File
 		err = json.Unmarshal(jsonOutput, &FileData)
 		if err != nil {
 			fmt.Errorf("error is ", err)
 			return
 		}
-		//extract the info data and convert it into bencode
+		//extract data of info section
 		bencodedInfo := ""
 		bencodedInfo += "d"
-		bencodedInfo += "6:length"
-		strLen := strconv.Itoa(int(FileData.Info.Length))
-		bencodedInfo += ("i" + strLen + "e")
-		bencodedInfo += "12:piece length"
-		strLen = strconv.Itoa(int(FileData.Info.PieceLength))
-		bencodedInfo += ("i" + strLen + "e")
-		bencodedInfo += "4:name"
+		lengthStr := strconv.Itoa(int(FileData.Info.Length))
+		bencodedInfo += "i" + lengthStr + "e"
+		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
+		bencodedInfo += "i" + piecesLengthStr + "e"
 		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
-		// bencodedInfo += "4:pieces"
-		// bencodedInfo += strconv.Itoa(len(string(FileData.Info.Pieces))) + string(FileData.Info.Pieces)
+		piecesStr := fmt.Sprintf("%x", FileData.Info.Pieces)
+		bencodedInfo += strconv.Itoa(len(piecesStr)) + ":" + piecesStr
 		bencodedInfo += "e"
-		var sha = sha1.New()
-		sha.Write([]byte(bencodedInfo))
-		var encrypted = sha.Sum(nil)
+
+		//make a sha1 hash
+		sha1 := sha1.New()
+		sha1.Write([]byte(bencodedInfo))
+		var encrypted = sha1.Sum(nil)
 		var encryptedString = fmt.Sprintf("%x", encrypted)
 		// fmt.Println(encryptedString)
-		fmt.Print("Info Hash: " + encryptedString )
-		// fmt.Printf(bencodedInfo)
+		fmt.Print("Hash Info: ",encryptedString)
+		// fmt.Print(bencodedInfo)
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
