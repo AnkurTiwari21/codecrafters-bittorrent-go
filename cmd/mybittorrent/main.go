@@ -155,7 +155,7 @@ func main() {
 		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
 		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
 		bencodedInfo += "i" + piecesLengthStr + "e"
-		
+
 		piecesStr := fmt.Sprintf("%x", FileData.Info.Pieces)
 		bencodedInfo += strconv.Itoa(len(piecesStr)) + ":" + piecesStr
 		bencodedInfo += "e"
@@ -166,7 +166,7 @@ func main() {
 		var encrypted = sha1.Sum(nil)
 		var encryptedString = fmt.Sprintf("%x", encrypted)
 		// fmt.Println(encryptedString)
-		fmt.Print("Hash Info: ",encryptedString)
+		fmt.Printf("Hash Info: %v", encryptedString)
 		// fmt.Print(bencodedInfo)
 	} else {
 		fmt.Println("Unknown command: " + command)
