@@ -151,13 +151,13 @@ func main() {
 		bencodedInfo := ""
 		bencodedInfo += "4:infod"
 		lengthStr := strconv.Itoa(int(FileData.Info.Length))
-		bencodedInfo += "i" + lengthStr + "e"
-		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
+		bencodedInfo += "6:length" + "i" + lengthStr + "e"
+		bencodedInfo += "4:name" + strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
 		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
-		bencodedInfo += "i" + piecesLengthStr + "e"
+		bencodedInfo += "12:piece length" + "i" + piecesLengthStr + "e"
 
-		piecesStr := fmt.Sprintf("%x", []byte(FileData.Info.Pieces))
-		bencodedInfo += strconv.Itoa(len(piecesStr)) + ":" + piecesStr
+		pieces := []byte(FileData.Info.Pieces)
+		bencodedInfo += "6:pieces" + strconv.Itoa(len(pieces)) + ":" + string(pieces)
 		bencodedInfo += "e"
 
 		//make a sha1 hash
