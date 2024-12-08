@@ -32,7 +32,7 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 		}
 
 		lengthStr := bencodedString[*pointer:firstColonIndex]
-
+		//3:123
 		length, err := strconv.Atoi(lengthStr)
 		if err != nil {
 			return "", err
@@ -50,7 +50,6 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 			numStr += string(bencodedString[i])
 			i++
 		}
-		i--
 		num, err := strconv.Atoi(numStr)
 		if err != nil {
 			return "", fmt.Errorf("error in conversion..")
@@ -58,7 +57,7 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 		*pointer = i + 1
 		return num, nil
 	} else if bencodedString[*pointer] == 'l' {
-		//it is a list
+		// it is a list
 		// fmt.Print("in list")
 		// fmt.Print("pointer is ")
 		// fmt.Print(*pointer)
@@ -75,6 +74,8 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 			}
 			if result != "" {
 				list = append(list, result)
+			} else {
+				return list, nil
 			}
 		}
 		return list, nil
