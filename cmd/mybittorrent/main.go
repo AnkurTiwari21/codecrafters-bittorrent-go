@@ -42,7 +42,12 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 		// for bencodedString[0]-'0'>=0 && bencodedString[0]-'0'<=9 {
 		// 	num += bencodedString
 		// }
-		return bencodedString[1:len(bencodedString)-1], nil
+		numString := bencodedString[1:len(bencodedString)-1]
+		num , err:= strconv.Atoi(numString)
+		if err!=nil {
+			return "",fmt.Errorf("error in conversion")
+		}
+		return num, nil
 	} else {
 		return "", fmt.Errorf("Only strings are supported at the moment")
 	}
