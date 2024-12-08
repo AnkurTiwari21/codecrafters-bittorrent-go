@@ -17,16 +17,11 @@ var _ = json.Marshal
 // - 10:hello12345 -> hello12345
 func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 	if unicode.IsDigit(rune(bencodedString[*pointer])) {
-		// fmt.Print("in string")
-		// fmt.Print("pointer is ")
-		// fmt.Print(*pointer)
 		var firstColonIndex int
 
 		for i := *pointer; i < len(bencodedString)+(*pointer); i++ {
 			if bencodedString[i] == ':' {
 				firstColonIndex = i
-				// fmt.Print("first colon ")
-				// fmt.Print(firstColonIndex)
 				break
 			}
 		}
@@ -40,9 +35,6 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 		*pointer = firstColonIndex + 1 + length
 		return bencodedString[firstColonIndex+1 : firstColonIndex+1+length], nil
 	} else if bencodedString[*pointer] == 'i' {
-		// fmt.Print("in integer")
-		// fmt.Print("pointer is ")
-		// fmt.Print(*pointer)
 		i := *pointer
 		numStr := ""
 		i++
@@ -57,18 +49,10 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 		*pointer = i + 1
 		return num, nil
 	} else if bencodedString[*pointer] == 'l' {
-		// it is a list
-		// fmt.Print("in list")
-		// fmt.Print("pointer is ")
-		// fmt.Print(*pointer)
 		list := []interface{}{}
 		*pointer = *pointer + 1
 		for *pointer < len(bencodedString) {
 			result, err := decodeBencode(bencodedString, pointer)
-			// fmt.Print("\n returned with ")
-			// fmt.Print(result)
-			// fmt.Print("\n current index is ")
-			// fmt.Print(*pointer)
 			if err != nil {
 				return "", fmt.Errorf("error in decoding string | err", err)
 			}
@@ -79,6 +63,40 @@ func decodeBencode(bencodedString string, pointer *int) (interface{}, error) {
 			}
 		}
 		return list, nil
+	} else if bencodedString[*pointer] == 'd' {
+		dict := map[string]interface{}{}
+		*pointer = *pointer + 1
+		item := 0
+		var key string
+		var value interface{}
+		for *pointer < len(bencodedString) {
+			// fmt.Print("pointer is ",*pointer)
+			// fmt.Print("len is ",len(bencodedString))
+			result, err := decodeBencode(bencodedString, pointer)
+			if err != nil {
+				return "", fmt.Errorf("error in decoding string | err", err)
+			}
+			// fmt.Print("returned with ",result)
+			// fmt.Print("current pointer ",*pointer)
+
+			if result != "" {
+				if item == 0 {
+					item = 1
+					key = result.(string)
+				} else {
+					item = 0
+					value = result
+					dict[key] = value
+				}
+			} else {
+				// fmt.Print("here1")
+				return dict, nil
+			}
+			// fmt.Print(dict)
+			// fmt.Print("\n")
+		}
+		// fmt.Print("here")
+		return dict, nil
 	} else if bencodedString[*pointer] == 'e' {
 		*pointer = *pointer + 1
 		return "", nil
