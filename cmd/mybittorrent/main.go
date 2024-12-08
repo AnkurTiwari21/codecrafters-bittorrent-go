@@ -165,7 +165,7 @@ func main() {
 		var encrypted = sha.Sum(nil)
 		var encryptedString = fmt.Sprintf("%x", encrypted)
 		// fmt.Println(encryptedString)
-		fmt.Print("Tracker URL: " + FileData.Announce + " " + "Length: " + strconv.Itoa(int(FileData.Info.Length)) + " " + "Info Hash: " + encryptedString + "\n")
+		fmt.Print("Tracker URL: " + FileData.Announce + " " + "Length: " + strconv.Itoa(int(FileData.Info.Length)) + " " + "Info Hash: " + encryptedString )
 		// fmt.Printf(bencodedInfo)
 	} else {
 		fmt.Println("Unknown command: " + command)
