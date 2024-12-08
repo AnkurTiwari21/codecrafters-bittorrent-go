@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -145,7 +146,27 @@ func main() {
 			fmt.Errorf("error is ", err)
 			return
 		}
-		fmt.Print("Tracker URL: " + FileData.Announce + " " + "Length: " + strconv.Itoa(int(FileData.Info.Length)))
+		//extract the info data and convert it into bencode
+		bencodedInfo := ""
+		bencodedInfo += "d"
+		bencodedInfo += "6:length"
+		strLen := strconv.Itoa(int(FileData.Info.Length))
+		bencodedInfo += ("i" + strLen + "e")
+		bencodedInfo += "12:piece length"
+		strLen = strconv.Itoa(int(FileData.Info.PieceLength))
+		bencodedInfo += ("i" + strLen + "e")
+		bencodedInfo += "4:name"
+		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
+		// bencodedInfo += "4:pieces"
+		// bencodedInfo += strconv.Itoa(len(string(FileData.Info.Pieces))) + string(FileData.Info.Pieces)
+		bencodedInfo += "e"
+		var sha = sha1.New()
+		sha.Write([]byte(bencodedInfo))
+		var encrypted = sha.Sum(nil)
+		var encryptedString = fmt.Sprintf("%x", encrypted)
+		// fmt.Println(encryptedString)
+		fmt.Print("Tracker URL: " + FileData.Announce + " " + "Length: " + strconv.Itoa(int(FileData.Info.Length)) + " " + "Info Hash: " + encryptedString + "\n")
+		// fmt.Printf(bencodedInfo)
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
