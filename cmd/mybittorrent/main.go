@@ -149,7 +149,7 @@ func main() {
 		}
 		//extract data of info section
 		bencodedInfo := ""
-		bencodedInfo += "d"
+		bencodedInfo += "4:infod"
 		lengthStr := strconv.Itoa(int(FileData.Info.Length))
 		bencodedInfo += "i" + lengthStr + "e"
 		bencodedInfo += strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
