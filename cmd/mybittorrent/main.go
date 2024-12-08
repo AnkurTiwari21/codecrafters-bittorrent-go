@@ -34,20 +34,51 @@ func decodeBencode(bencodedString string) (interface{}, error) {
 		}
 
 		return bencodedString[firstColonIndex+1 : firstColonIndex+1+length], nil
-	} else if (bencodedString[1]-'0' >= 0 && bencodedString[1]-'0' <= 9) || bencodedString[1]=='-' {
-		//decode this integer
-		//i<inteeger>e
-		// num := ""
-
-		// for bencodedString[0]-'0'>=0 && bencodedString[0]-'0'<=9 {
-		// 	num += bencodedString
-		// }
-		numString := bencodedString[1:len(bencodedString)-1]
-		num , err:= strconv.Atoi(numString)
-		if err!=nil {
-			return "",fmt.Errorf("error in conversion")
+	} else if bencodedString[0] == 'i' {
+		numString := bencodedString[1 : len(bencodedString)-1]
+		num, err := strconv.Atoi(numString)
+		if err != nil {
+			return "", fmt.Errorf("error in conversion")
 		}
 		return num, nil
+	} else if bencodedString[0] == 'l' {
+		//it is a list
+		list := []interface{}{}
+		fmt.Print("hi")
+		for i := 1; i < len(bencodedString); i++ {
+			if bencodedString[i] == 'i' {
+				numStr := ""
+				i++
+				for bencodedString[i]-'0' >= 0 && bencodedString[i]-'0' <= 9 || bencodedString[i] == '-' {
+					numStr += string(bencodedString[i])
+					i++
+				}
+				num, err := strconv.Atoi(numStr)
+				if err != nil {
+					return "", fmt.Errorf("error in conversion..")
+				}
+				list = append(list, num)
+				fmt.Print("appending")
+				fmt.Print(num)
+			}else if(unicode.IsDigit(rune(bencodedString[i]))){
+				str := ""
+				lenStr := ""
+				for unicode.IsDigit(rune(bencodedString[i])){
+					lenStr += string(bencodedString[i])
+					i++;
+				}
+				i++; //skip in colon
+				length,err:=strconv.Atoi(lenStr)
+				if err!= nil {
+					return "", fmt.Errorf("error in converting for string..")
+				}
+				for k:=0;k<length;k++{
+					str += string(bencodedString[i])
+					i++;
+				}
+			}
+		}
+		return list, nil
 	} else {
 		return "", fmt.Errorf("Only strings are supported at the moment")
 	}
