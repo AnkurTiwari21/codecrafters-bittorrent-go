@@ -4,11 +4,11 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"sort"
 	"strconv"
 	"unicode"
+
+	"github.com/codecrafters-io/bittorrent-starter-go/cmd/mybittorrent/model"
 	// bencode "github.com/jackpal/bencode-go" // Available if you need it!
 )
 
@@ -126,92 +126,57 @@ func main() {
 		jsonOutput, _ := json.Marshal(decoded)
 		fmt.Println(string(jsonOutput))
 	} else if command == "info" {
-		// Read the torrent file
+		//read the file assigned in command line
 		data, err := os.ReadFile(os.Args[2])
 		if err != nil {
-			log.Fatalf("Error reading torrent file: %v\n", err)
+			fmt.Println("error in opening file | err", err)
+			return
 		}
-
-		// Decode Bencoded data (decodeBencode is assumed to return map[string]interface{})
 		pointer := 0
-		decoded, err := decodeBencode2(string(data), &pointer)
+		decoded, err := decodeBencode(string(data), &pointer)
 		if err != nil {
-			log.Fatalf("Error decoding Bencoded data: %v\n", err)
+			fmt.Println(err)
+			return
 		}
 
-		// Extract info dictionary from decoded map
-		info, ok := decoded["info"].(map[string]interface{})
-		if !ok {
-			log.Fatalf("Error: 'info' field not found or is of incorrect type\n")
+		jsonOutput, _ := json.Marshal(decoded)
+		// fmt.Print(string(jsonOutput))
+		var FileData model.File
+		err = json.Unmarshal(jsonOutput, &FileData)
+		if err != nil {
+			fmt.Errorf("error is ", err)
+			return
 		}
+		//extract data of info section
+		bencodedInfo := ""
+		bencodedInfo += "4:infod"
+		lengthStr := strconv.Itoa(int(FileData.Info.Length))
+		bencodedInfo += "6:length" + "i" + lengthStr + "e"
+		bencodedInfo += "4:name" + strconv.Itoa(len(FileData.Info.Name)) + ":" + FileData.Info.Name
+		piecesLengthStr := strconv.Itoa(int(FileData.Info.PieceLength))
+		bencodedInfo += "12:piece length" + "i" + piecesLengthStr + "e"
 
-		// Manually Bencode the 'info' dictionary
-		bencodedInfo := bencode(info)
+		pieces := []byte(FileData.Info.Pieces)
+		bencodedInfo += "6:pieces" + strconv.Itoa(len(pieces)) + ":" + string(pieces)
+		bencodedInfo += "e"
 
-		// Compute the SHA-1 hash of the Bencoded info dictionary
-		sha1Hash := sha1.New()
-		sha1Hash.Write([]byte(bencodedInfo))
-		infoHash := sha1Hash.Sum(nil)
-
-		// Output results
-		fmt.Printf("Tracker URL: %s\n", decoded["announce"])
-		fmt.Printf("Length: %v\n", info["length"])
-		fmt.Printf("Info Hash: %x\n", infoHash)
-
+		//make a sha1 hash
+		sha1 := sha1.New()
+		sha1.Write([]byte(bencodedInfo))
+		var encrypted = sha1.Sum(nil)
+		var encryptedString = fmt.Sprintf("%x", encrypted)
+		// fmt.Println(encryptedString)
+		fmt.Printf("Hash Info: %v", encryptedString)
+		// fmt.Print(bencodedInfo)
 	} else {
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
 	}
 }
 
-func decodeBencode2(data string, pointer *int) (map[string]interface{}, error) {
-	// Implement your Bencode decoding logic here
-	// Returning a sample map for demonstration
-	return map[string]interface{}{
-		"announce": "http://bittorrent-test-tracker.codecrafters.io/announce",
-		"info": map[string]interface{}{
-			"length":       int64(92063),
-			"name":         "sample.txt",
-			"piece length": int64(32768),
-			"pieces":       "abcdefg",
-		},
-	}, nil
-}
+// lli798e6:bananaee
 
-// bencode manually encodes a dictionary into Bencode format
-func bencode(data map[string]interface{}) string {
-	encoded := "d"
-	for _, key := range sortedKeys(data) {
-		encoded += fmt.Sprintf("%d:%s", len(key), key)
-		encoded += bencodeValue(data[key])
-	}
-	encoded += "e"
-	return encoded
-}
+// 1. [] lli798e6:bananaee
+// 2. [798,] li798e6:bananaee
 
-// bencodeValue encodes a value into Bencode format
-func bencodeValue(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return fmt.Sprintf("%d:%s", len(v), v)
-	case int, int64:
-		return fmt.Sprintf("i%de", v)
-	case []byte:
-		return fmt.Sprintf("%d:%s", len(v), string(v))
-	case map[string]interface{}:
-		return bencode(v)
-	default:
-		log.Fatalf("Unsupported Bencode value type: %T\n", v)
-		return ""
-	}
-}
-
-// sortedKeys returns the keys of a map sorted lexicographically
-func sortedKeys(data map[string]interface{}) []string {
-	keys := make([]string, 0, len(data))
-	for key := range data {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	return keys
-}
+// 3. returns 798 and 6:bananaee
